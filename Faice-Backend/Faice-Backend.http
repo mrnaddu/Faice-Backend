@@ -1,0 +1,6 @@
+@Faice_Backend_HostAddress = http://localhost:5086
+
+GET {{Faice_Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
