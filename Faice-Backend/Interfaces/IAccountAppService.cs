@@ -5,8 +5,8 @@ namespace Faice_Backend.Interfaces;
 
 public interface IAccountAppService
 {
-    Task< LoginResponseDto> Login(
+    Task< LoginResponseDto> LoginAsync(
         LoginRequestDto input);
 
-    Task<User> GetById(int id);
+    Task<User> GetByIdAsync(int id);
 }

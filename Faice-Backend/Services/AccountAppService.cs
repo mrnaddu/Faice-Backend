@@ -8,20 +8,20 @@ using Microsoft.EntityFrameworkCore;
 namespace Faice_Backend.Services;
 
 public class AccountAppService(
-    FaiceDbContext context,
+    Data.FaiceDbContext context,
     IJwtUtilsService jwtUtilsService)
         : IAccountAppService
 {
-    private readonly FaiceDbContext _context = context;
+    private readonly Data.FaiceDbContext _context = context;
     private readonly IJwtUtilsService _JwtUtilsService = jwtUtilsService;
 
-    public async Task<User> GetById(int id)
+    public async Task<User> GetByIdAsync(int id)
     {
         var user = await _context.Users.FirstOrDefaultAsync(x=> x.Id == id);
         return user ?? throw new KeyNotFoundException("User not found");
     }
 
-    public async Task<LoginResponseDto> Login(LoginRequestDto input)
+    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto input)
     {
         var user = await _context.Users.SingleOrDefaultAsync(x => x.Username == input.Username);
 
