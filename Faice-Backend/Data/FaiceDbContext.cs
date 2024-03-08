@@ -8,9 +8,8 @@ public class FaiceDbContext(DbContextOptions<FaiceDbContext> options)
 {
     public DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        // in memory database used for simplicity, change to a real db for production applications
-        options.UseInMemoryDatabase("Faice-Backend");
+        base.OnModelCreating(builder);
     }
 }

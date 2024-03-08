@@ -1,10 +1,11 @@
 ﻿using Faice_Backend.Enums;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Faice_Backend.Entities;
 
-public class User
+public class User : IdentityUser
 {
     [Key]
     public int Id { get; set; }

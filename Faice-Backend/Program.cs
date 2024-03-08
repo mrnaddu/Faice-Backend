@@ -5,7 +5,11 @@ using Faice_Backend.Enums;
 using Faice_Backend.Helpers;
 using Faice_Backend.Interfaces;
 using Faice_Backend.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +19,20 @@ var services = builder.Services;
 var env = builder.Environment;
 
 
-services.AddDbContext<FaiceDbContext>();
+// Database Injection
+services.AddDbContext<FaiceDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-services.AddCors();
+builder.Services.AddCors(opt =>
+{
+    opt.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyHeader();
+        policy.AllowAnyOrigin();
+        policy.WithMethods("GET", "POST", "DELETE", "PUT");
+        policy.WithOrigins("http://localhost:4200/");
+    });
+});
 
 // Prevent json object from being self referenced multiple times when serialized to string
 services.AddControllers().AddJsonOptions(x =>
@@ -25,6 +40,11 @@ services.AddControllers().AddJsonOptions(x =>
     // serialize enums as strings in api responses (e.g. Role)
     x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+builder.Services.AddMigration<FaiceDbContext, UsersSeed>();
+
+// Mapping
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 // configure strongly typed settings object
 services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
@@ -35,6 +55,7 @@ services.AddScoped<IAccountAppService, AccountAppService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 
@@ -76,20 +97,6 @@ app.UseAuthorization();
     app.UseMiddleware<JwtMiddleware>();
 
     app.MapControllers();
-}
-
-// create hardcoded test users in db on startup
-{
-    var testUsers = new List<User>
-    {
-        new() { Id = 1, FirstName = "Admin", LastName = "User", Username = "admin", PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"), Role = Role.Admin },
-        new() { Id = 2, FirstName = "Normal", LastName = "User", Username = "user", PasswordHash = BCrypt.Net.BCrypt.HashPassword("user"), Role = Role.User }
-    };
-
-    using var scope = app.Services.CreateScope();
-    var dataContext = scope.ServiceProvider.GetRequiredService<FaiceDbContext>();
-    dataContext.Users.AddRange(testUsers);
-    dataContext.SaveChanges();
 }
 
     app.Run();
