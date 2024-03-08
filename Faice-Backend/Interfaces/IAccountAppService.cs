@@ -7,4 +7,6 @@ public interface IAccountAppService
 {
     Task< LoginResponseDto> Login(
         LoginRequestDto input);
+
+    Task<User> GetById(int id);
 }
