@@ -26,7 +26,7 @@ public class AccountAppService(
         var user = await _context.Users.SingleOrDefaultAsync(x => x.Username == input.Username);
 
         // validate
-        if (!(user != null && BCrypt.Verify(input.Password, user.PasswordHash)))
+        if (!(user != null && BCrypt.Net.BCrypt.Verify(input.Password, user.PasswordHash)))
             throw new AppException("Username or password is incorrect");
 
         // authentication successful so generate jwt token
