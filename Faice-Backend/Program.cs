@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -20,43 +21,62 @@ services.AddDbContext<FaiceDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // For Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<FaiceDbContext>()
     .AddDefaultTokenProviders();
 
-// Adding Authentication
-builder.Services.AddAuthentication(options =>
+services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder
+            .WithOrigins(
+                configuration["App:CorsOrigins"])
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+
+services.AddAuthentication(options => 
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+                        .AddJwtBearer(options =>
+                        {
+                            options.SaveToken = true;
+                            options.Authority = configuration["JWT:ValidIssuer"];
+                            options.RequireHttpsMetadata = Convert.ToBoolean(configuration["JWT:RequireHttpsMetadata"]);
+                            options.Audience = "Faice-Backend";
+                            options.TokenValidationParameters = new TokenValidationParameters()
+                            {
+                                ValidateIssuer = true,
+                                ValidateAudience = true,
+                                ValidAudience = configuration["JWT:ValidAudience"],
+                                ValidIssuer = configuration["JWT:ValidIssuer"],
+                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+                            };
+                            options.BackchannelHttpHandler = new HttpClientHandler
+                            {
+                                ServerCertificateCustomValidationCallback =
+                              (message, certificate, chain, sslPolicyErrors) => true
+                            };
+                        });
 
-// Adding Jwt Bearer
-.AddJwtBearer(options =>
- {
-     options.SaveToken = true;
-     options.RequireHttpsMetadata = false;
-     options.TokenValidationParameters = new TokenValidationParameters()
-     {
-         ValidateIssuer = true,
-         ValidateAudience = true,
-         ValidAudience = configuration["JWT:ValidAudience"],
-         ValidIssuer = configuration["JWT:ValidIssuer"],
-         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
-     };
- });
-
-
-builder.Services.AddCors(opt =>
+services.AddSwaggerGen(options =>
 {
-    opt.AddDefaultPolicy(policy =>
+    options.SwaggerDoc("v1", new OpenApiInfo 
     {
-        policy.AllowAnyHeader();
-        policy.AllowAnyOrigin();
-        policy.WithMethods("GET", "POST", "DELETE", "PUT");
-        policy.WithOrigins("http://localhost:4200/");
+        Title = "Faice-Backend API",
+        Version = "v1"
     });
+
+    options.DocInclusionPredicate((docName, description) => true);
+    options.CustomSchemaIds(type => type.FullName);
 });
 
 // Prevent json object from being self referenced multiple times when serialized to string
@@ -68,12 +88,12 @@ services.AddControllers().AddJsonOptions(x =>
 
 
 // Mapping
-builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+services.AddSwaggerGen();
 
 var app = builder.Build();
 
