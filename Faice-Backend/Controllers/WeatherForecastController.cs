@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Faice_Backend.Controllers;
 
-[Authorize(Roles = UserRoles.Admin)]
+/*[Authorize(Roles = UserRoles.Admin)]*/
 [ApiController]
 [Route("api/[controller]")]
 public class WeatherForecastController : ControllerBase
