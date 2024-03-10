@@ -3,7 +3,7 @@
 namespace Faice_Backend.Dtos;
 
 #nullable enable
-public class RegisterModel
+public class RegisterDto
 {
     [Required(ErrorMessage = "User Name is required")]
     public string? Username { get; set; }

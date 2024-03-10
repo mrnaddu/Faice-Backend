@@ -1,4 +1,5 @@
-﻿using Faice_Backend.Dtos;
+﻿using Faice_Backend.Consts;
+using Faice_Backend.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -10,7 +11,7 @@ namespace Faice_Backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthenticateController(
+public class AccountController(
     UserManager<IdentityUser> userManager,
     RoleManager<IdentityRole> roleManager,
     IConfiguration configuration) : ControllerBase
@@ -21,7 +22,7 @@ public class AuthenticateController(
 
     [HttpPost]
     [Route("login")]
-    public async Task<IActionResult> Login([FromBody] LoginModel model)
+    public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
         var user = await _userManager.FindByNameAsync(model.Username);
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
@@ -52,11 +53,11 @@ public class AuthenticateController(
 
     [HttpPost]
     [Route("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterModel model)
+    public async Task<IActionResult> Register([FromBody] RegisterDto model)
     {
         var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists != null)
-            return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto { Status = "Error", Message = "User already exists!" });
 
         IdentityUser user = new()
         {
@@ -66,18 +67,23 @@ public class AuthenticateController(
         };
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
-            return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto { Status = "Error", Message = "User creation failed! Please check user details and try again." });
 
-        return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+        return Ok(new ResponseDto { Status = "Success", Message = "User created successfully!" });
     }
 
     [HttpPost]
     [Route("register-admin")]
-    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel model)
+    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto model)
     {
         var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists != null)
-            return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new ResponseDto
+                { 
+                    Status = "Error",
+                    Message = "User already exists!"
+                });
 
         IdentityUser user = new()
         {
@@ -87,7 +93,12 @@ public class AuthenticateController(
         };
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
-            return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new ResponseDto 
+                { 
+                    Status = "Error", 
+                    Message = "User creation failed! Please check user details and try again." 
+                });
 
         if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
             await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
@@ -102,7 +113,11 @@ public class AuthenticateController(
         {
             await _userManager.AddToRoleAsync(user, UserRoles.User);
         }
-        return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+        return Ok(new ResponseDto 
+        {
+            Status = "Success",
+            Message = "User created successfully!"
+        });
     }
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)
