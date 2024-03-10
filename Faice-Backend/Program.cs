@@ -41,7 +41,6 @@ services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-builder.Services.AddMigration<FaiceDbContext, UsersSeed>();
 
 // Mapping
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
