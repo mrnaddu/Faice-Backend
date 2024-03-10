@@ -10,21 +10,14 @@ namespace Faice_Backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthenticateController : ControllerBase
+public class AuthenticateController(
+    UserManager<IdentityUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    IConfiguration configuration) : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IConfiguration _configuration;
-
-    public AuthenticateController(
-        UserManager<IdentityUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration)
-    {
-        _userManager = userManager;
-        _roleManager = roleManager;
-        _configuration = configuration;
-    }
+    private readonly UserManager<IdentityUser> _userManager = userManager;
+    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly IConfiguration _configuration = configuration;
 
     [HttpPost]
     [Route("login")]
