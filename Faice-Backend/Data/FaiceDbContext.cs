@@ -1,12 +1,12 @@
-﻿using Faice_Backend.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Faice_Backend.Data;
 
 public class FaiceDbContext(DbContextOptions<FaiceDbContext> options)
-        : DbContext(options)
+    : IdentityDbContext<IdentityUser>(options)
 {
-    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

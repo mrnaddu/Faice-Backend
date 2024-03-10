@@ -1,20 +1,16 @@
-using Faice_Backend.Authorization;
 using Faice_Backend.Data;
-using Faice_Backend.Entities;
-using Faice_Backend.Enums;
-using Faice_Backend.Helpers;
-using Faice_Backend.Interfaces;
-using Faice_Backend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
+ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
-var configuration = builder.Configuration;
 var services = builder.Services;
 var env = builder.Environment;
 
@@ -22,6 +18,35 @@ var env = builder.Environment;
 // Database Injection
 services.AddDbContext<FaiceDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// For Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<FaiceDbContext>()
+    .AddDefaultTokenProviders();
+
+// Adding Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+
+// Adding Jwt Bearer
+.AddJwtBearer(options =>
+ {
+     options.SaveToken = true;
+     options.RequireHttpsMetadata = false;
+     options.TokenValidationParameters = new TokenValidationParameters()
+     {
+         ValidateIssuer = true,
+         ValidateAudience = true,
+         ValidAudience = configuration["JWT:ValidAudience"],
+         ValidIssuer = configuration["JWT:ValidIssuer"],
+         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+     };
+ });
+
 
 builder.Services.AddCors(opt =>
 {
@@ -45,18 +70,10 @@ services.AddControllers().AddJsonOptions(x =>
 // Mapping
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
-// configure strongly typed settings object
-services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
-
-// configure DI for application services
-services.AddScoped<IJwtUtilsService, JwtUtilsService>();
-services.AddScoped<IAccountAppService, AccountAppService>();
-
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
-
 
 var app = builder.Build();
 
@@ -88,12 +105,6 @@ app.UseAuthorization();
         .AllowAnyOrigin()
         .AllowAnyMethod()
         .AllowAnyHeader());
-
-    // global error handler
-    app.UseMiddleware<ErrorHandlerMiddleware>();
-
-    // custom jwt auth middleware
-    app.UseMiddleware<JwtMiddleware>();
 
     app.MapControllers();
 }
