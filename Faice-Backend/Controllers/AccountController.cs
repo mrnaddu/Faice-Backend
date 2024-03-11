@@ -27,16 +27,17 @@ public class AccountController(
 
     [HttpPost]
     [Route("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto model)
+    public async Task<IActionResult> Login([FromBody] LoginDto input)
     {
-        var user = await _userManager.FindByNameAsync(model.Username);
-        if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+        var user = await _userManager.FindByEmailAsync(input.Email);
+        if (user != null && await _userManager.CheckPasswordAsync(user, input.Password))
         {
             var userRoles = await _userManager.GetRolesAsync(user);
 
             var authClaims = new List<Claim>
             {
                 new(ClaimTypes.Name, user.UserName),
+                new(ClaimTypes.Email, user.Email),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
@@ -88,17 +89,20 @@ public class AccountController(
         if (userExists != null)
             return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto { Status = "Error", Message = "User already exists!" });
 
-        IdentityUser user = new()
+        AppUser user = new()
         {
             Email = model.Email,
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username,
             EmailConfirmed = false,
+            UserRole = AppRoles.User,
             PhoneNumber = model.PhoneNumber,
             PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
         };
+
         var result = await _userManager.CreateAsync(user, model.Password);
+        await _userManager.AddToRoleAsync(user, AppRoles.User);
         if (!result.Succeeded)
             return StatusCode(StatusCodes.Status500InternalServerError, 
                 new ResponseDto 
@@ -107,14 +111,6 @@ public class AccountController(
                     Message = "User creation failed! Please check user details and try again." 
                 });
 
-        if (!await _roleManager.RoleExistsAsync(AppRoles.User))
-            await _roleManager.CreateAsync(new IdentityRole(AppRoles.User));
-
-        if (await _roleManager.RoleExistsAsync(AppRoles.User))
-        {
-            await _userManager.AddToRoleAsync(user, AppRoles.User);
-        }
-
         return Ok(new ResponseDto 
         {
             Status = "Success",
@@ -122,53 +118,6 @@ public class AccountController(
         });
     }
 
-    [HttpPost]
-    [Route("register-admin")]
-    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterDto model)
-    {
-        var userExists = await _userManager.FindByNameAsync(model.Username);
-        if (userExists != null)
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                new ResponseDto
-                { 
-                    Status = "Error",
-                    Message = "User already exists!"
-                });
-
-        IdentityUser user = new()
-        {
-            Email = model.Email,
-            SecurityStamp = Guid.NewGuid().ToString(),
-            UserName = model.Username
-        };
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                new ResponseDto 
-                { 
-                    Status = "Error", 
-                    Message = "User creation failed! Please check user details and try again." 
-                });
-
-        if (!await _roleManager.RoleExistsAsync(AppRoles.Admin))
-            await _roleManager.CreateAsync(new IdentityRole(AppRoles.Admin));
-        if (!await _roleManager.RoleExistsAsync(AppRoles.User))
-            await _roleManager.CreateAsync(new IdentityRole(AppRoles.User));
-
-        if (await _roleManager.RoleExistsAsync(AppRoles.Admin))
-        {
-            await _userManager.AddToRoleAsync(user, AppRoles.Admin);
-        }
-        if (await _roleManager.RoleExistsAsync(AppRoles.User))
-        {
-            await _userManager.AddToRoleAsync(user, AppRoles.User);
-        }
-        return Ok(new ResponseDto 
-        {
-            Status = "Success",
-            Message = "User created successfully!"
-        });
-    }
 
     [HttpPost]
     [Route("reset-password")]
@@ -232,7 +181,7 @@ public class AccountController(
         return token;
     }
 
-    [HttpGet]
+    /*[HttpGet]
     [Route("current")]
     [Authorize] 
     public IActionResult GetCurrentUserInfo()
@@ -248,5 +197,5 @@ public class AccountController(
                 UserId = userId,
                 Username = username 
             });
-    }
+    }*/
 }

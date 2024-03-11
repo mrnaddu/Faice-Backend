@@ -12,7 +12,7 @@ public static class SeedData
         var userManager = services.GetRequiredService<UserManager<AppUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        string[] roleNames = ["Admin", "User"];
+        string[] roleNames = [AppRoles.Admin, AppRoles.User, AppRoles.SuperAdmin];
         foreach (var roleName in roleNames)
         {
             var roleExist = await roleManager.RoleExistsAsync(roleName);
@@ -29,8 +29,9 @@ public static class SeedData
         {
             var newAdminUser = new AppUser
             {
-                UserName = adminEmail,
+                UserName = "admin",
                 Email = adminEmail,
+                UserRole = AppRoles.Admin,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
 
@@ -38,6 +39,26 @@ public static class SeedData
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(newAdminUser, "Admin");
+            }
+        }
+
+        var superAdminEmail = "superadmin@example.com";
+        var superAdmin = await userManager.FindByEmailAsync(superAdminEmail);
+
+        if (superAdmin == null)
+        {
+            var newSuperAdminUser = new AppUser
+            {
+                UserName = "superadmin",
+                Email = superAdminEmail,
+                UserRole= AppRoles.SuperAdmin,
+                SecurityStamp = Guid.NewGuid().ToString(),
+            };
+
+            var result = await userManager.CreateAsync(newSuperAdminUser, "SuperAdmin@123");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(newSuperAdminUser, "SuperAdmin");
             }
         }
     }
