@@ -67,9 +67,18 @@ public class AccountController(
         };
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
-            return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+            return StatusCode(StatusCodes.Status500InternalServerError, 
+                new ResponseDto 
+                {
+                    Status = "Error",
+                    Message = "User creation failed! Please check user details and try again." 
+                });
 
-        return Ok(new ResponseDto { Status = "Success", Message = "User created successfully!" });
+        return Ok(new ResponseDto 
+        {
+            Status = "Success",
+            Message = "User created successfully!" 
+        });
     }
 
     [HttpPost]
