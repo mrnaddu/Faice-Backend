@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Faice_Backend;
 
@@ -37,50 +37,64 @@ public class FaiceHttpiHost(IConfiguration configuration)
             });
         });
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
             .AddJwtBearer(options =>
             {
+                options.IncludeErrorDetails = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
+                    ClockSkew = TimeSpan.Zero,
                     ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT:Secret"])),
                     ValidAudience = config["JWT:ValidAudience"],
                     ValidIssuer = config["JWT:ValidIssuer"],
                 };
             });
 
-        services.AddSwaggerGen(c =>
+        services.AddSwaggerGen(option =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo 
+            option.SwaggerDoc("v1", new OpenApiInfo 
             {
                 Title = "Faice-Backend API",
                 Version = "v1"
             });
 
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "JWT Authorization header using the Bearer scheme",
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid token",
+                Name = "Authorization",
                 Type = SecuritySchemeType.Http,
-                Scheme = "bearer"
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
+            new OpenApiSecurityScheme
             {
-                new OpenApiSecurityScheme
+                Reference = new OpenApiReference
                 {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
-        });
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
         });
 
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(opt =>
+        {
+            opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -93,6 +107,10 @@ public class FaiceHttpiHost(IConfiguration configuration)
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Faice-Backend v1");
             });
         }
+
+        app.UseHttpsRedirection();
+
+        app.UseStatusCodePages();
 
         app.UseAuthentication();
 
