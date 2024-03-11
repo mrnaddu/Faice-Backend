@@ -1,6 +1,6 @@
-﻿using Faice_Backend.Consts;
-using Faice_Backend.Dtos;
+﻿using Faice_Backend.Dtos;
 using Faice_Backend.Interfaces;
+using Faice_Backend.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -107,12 +107,12 @@ public class AccountController(
                     Message = "User creation failed! Please check user details and try again." 
                 });
 
-        if (!await _roleManager.RoleExistsAsync(UserRoles.User))
-            await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+        if (!await _roleManager.RoleExistsAsync(AppRoles.User))
+            await _roleManager.CreateAsync(new IdentityRole(AppRoles.User));
 
-        if (await _roleManager.RoleExistsAsync(UserRoles.User))
+        if (await _roleManager.RoleExistsAsync(AppRoles.User))
         {
-            await _userManager.AddToRoleAsync(user, UserRoles.User);
+            await _userManager.AddToRoleAsync(user, AppRoles.User);
         }
 
         return Ok(new ResponseDto 
@@ -150,18 +150,18 @@ public class AccountController(
                     Message = "User creation failed! Please check user details and try again." 
                 });
 
-        if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
-            await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-        if (!await _roleManager.RoleExistsAsync(UserRoles.User))
-            await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+        if (!await _roleManager.RoleExistsAsync(AppRoles.Admin))
+            await _roleManager.CreateAsync(new IdentityRole(AppRoles.Admin));
+        if (!await _roleManager.RoleExistsAsync(AppRoles.User))
+            await _roleManager.CreateAsync(new IdentityRole(AppRoles.User));
 
-        if (await _roleManager.RoleExistsAsync(UserRoles.Admin))
+        if (await _roleManager.RoleExistsAsync(AppRoles.Admin))
         {
-            await _userManager.AddToRoleAsync(user, UserRoles.Admin);
+            await _userManager.AddToRoleAsync(user, AppRoles.Admin);
         }
-        if (await _roleManager.RoleExistsAsync(UserRoles.User))
+        if (await _roleManager.RoleExistsAsync(AppRoles.User))
         {
-            await _userManager.AddToRoleAsync(user, UserRoles.User);
+            await _userManager.AddToRoleAsync(user, AppRoles.User);
         }
         return Ok(new ResponseDto 
         {

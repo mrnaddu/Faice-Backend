@@ -1,7 +1,6 @@
-﻿namespace Faice_Backend.Consts;
+﻿namespace Faice_Backend.Models;
 
-#nullable enable
-public static class UserRoles
+public static class AppRoles
 {
     public const string Admin = "Admin";
     public const string User = "User";
