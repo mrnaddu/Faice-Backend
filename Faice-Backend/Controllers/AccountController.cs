@@ -2,7 +2,6 @@
 using Faice_Backend.Interfaces;
 using Faice_Backend.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -15,13 +14,11 @@ namespace Faice_Backend.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController(
-    UserManager<IdentityUser> userManager,
-    RoleManager<IdentityRole> roleManager,
+    UserManager<AppUser> userManager,
     IConfiguration configuration,
     IEmailAppService emailAppService) : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager = userManager;
-    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly UserManager<AppUser> _userManager = userManager;
     private readonly IConfiguration _configuration = configuration;
     private readonly IEmailAppService _emailAppService = emailAppService;
 

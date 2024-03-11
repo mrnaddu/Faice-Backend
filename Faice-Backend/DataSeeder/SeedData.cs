@@ -31,6 +31,7 @@ public static class SeedData
             {
                 UserName = "admin",
                 Email = adminEmail,
+                IsDeleted = false,
                 UserRole = AppRoles.Admin,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
@@ -51,6 +52,7 @@ public static class SeedData
             {
                 UserName = "superadmin",
                 Email = superAdminEmail,
+                IsDeleted=false,
                 UserRole= AppRoles.SuperAdmin,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
