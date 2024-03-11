@@ -1,10 +1,10 @@
-﻿using Faice_Backend.Consts;
+﻿using Faice_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Faice_Backend.Controllers;
 
-[Authorize(Roles = UserRoles.Admin)]
+[Authorize(Roles = AppRoles.Admin)]
 [ApiController]
 [Route("api/[controller]")]
 public class WeatherForecastController : ControllerBase

@@ -1,5 +1,7 @@
 ﻿using Faice_Backend.Data;
+using Faice_Backend.DataSeeder;
 using Faice_Backend.Interfaces;
+using Faice_Backend.Models;
 using Faice_Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -16,12 +18,14 @@ public class Startup(IConfiguration configuration)
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddIdentity<AppUser, IdentityRole>()
+            .AddEntityFrameworkStores<FaiceDbContext>()
+            .AddDefaultTokenProviders();
+
         services.AddDbContext<FaiceDbContext>(options =>
             options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddIdentity<IdentityUser, IdentityRole>()
-            .AddEntityFrameworkStores<FaiceDbContext>()
-            .AddDefaultTokenProviders();
+        services.AddScoped<FaiceDbContext>();
 
         services.AddCors(options =>
         {
@@ -108,6 +112,8 @@ public class Startup(IConfiguration configuration)
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Faice-Backend v1");
             });
         }
+
+        SeedData.Initialize(app.ApplicationServices).Wait();
 
         app.UseHttpsRedirection();
 
