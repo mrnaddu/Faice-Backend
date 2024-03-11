@@ -1,6 +1,8 @@
 ﻿using Faice_Backend.Consts;
 using Faice_Backend.Dtos;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Faice_Backend.Interfaces;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -14,14 +16,14 @@ namespace Faice_Backend.Controllers;
 [ApiController]
 public class AccountController(
     UserManager<IdentityUser> userManager,
-    SignInManager<IdentityUser> signInManager,
     RoleManager<IdentityRole> roleManager,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    IEmailAppService emailAppService) : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager = userManager;
-    private readonly SignInManager<IdentityUser> _signInManager = signInManager;
     private readonly RoleManager<IdentityRole> _roleManager = roleManager;
     private readonly IConfiguration _configuration = configuration;
+    private readonly IEmailAppService _emailAppService = emailAppService;
 
     [HttpPost]
     [Route("login")]
@@ -58,8 +60,24 @@ public class AccountController(
     [Route("logout")]
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
-        return Ok();
+        if (User.Identity.IsAuthenticated)
+        {
+            await HttpContext.SignOutAsync();
+
+            return Ok(
+                new 
+                { 
+                    message = "Logout successful" 
+                });
+        }
+        else
+        {
+            return BadRequest(
+                new 
+                {
+                    message = "No active session to log out from" 
+                });
+        }
     }
 
     [HttpPost]
@@ -152,7 +170,52 @@ public class AccountController(
         });
     }
 
+    [HttpPost]
+    [Route("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            return NotFound();
+        }
 
+        var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+        if (result.Succeeded)
+        {
+            return Ok(
+                new 
+                {
+                    message = "Password reset successful" 
+                });
+        }
+        else
+        {
+            return BadRequest(
+                new 
+                {
+                    message = "Password reset failed" 
+                });
+        }
+    }
+
+    [HttpPost]
+    [Route("send-reset-email")]
+    public async Task<IActionResult> SendResetEmail([FromBody] ForgotPasswordDto model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetLink = $"{Request.Scheme}://{Request.Host}/reset-password?email={user.Email}&token={token}";
+
+        await _emailAppService.SendEmailAsync(user.Email,"Reset Password" ,resetLink);
+
+        return Ok();
+    }
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)
     {
@@ -167,5 +230,23 @@ public class AccountController(
             );
 
         return token;
+    }
+
+    [HttpGet]
+    [Route("current")]
+    [Authorize] 
+    public IActionResult GetCurrentUserInfo()
+    {
+        ClaimsPrincipal user = HttpContext.User;
+
+        string userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string username = user.FindFirst(ClaimTypes.Name)?.Value;
+
+        return Ok(
+            new 
+            { 
+                UserId = userId,
+                Username = username 
+            });
     }
 }
