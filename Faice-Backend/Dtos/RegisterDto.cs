@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Faice_Backend.Dtos;
 
@@ -13,5 +14,10 @@ public class RegisterDto
     public string? Email { get; set; }
 
     [Required(ErrorMessage = "Password is required")]
+    [PasswordPropertyText]
     public string? Password { get; set; }
+
+    [Required(ErrorMessage = "PhoneNumber is required")]
+    [Phone]
+    public string? PhoneNumber { get; set; }
 }

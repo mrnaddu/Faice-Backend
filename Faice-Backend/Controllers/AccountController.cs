@@ -1,5 +1,6 @@
 ﻿using Faice_Backend.Consts;
 using Faice_Backend.Dtos;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -13,10 +14,12 @@ namespace Faice_Backend.Controllers;
 [ApiController]
 public class AccountController(
     UserManager<IdentityUser> userManager,
+    SignInManager<IdentityUser> signInManager,
     RoleManager<IdentityRole> roleManager,
     IConfiguration configuration) : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager = userManager;
+    private readonly SignInManager<IdentityUser> _signInManager = signInManager;
     private readonly RoleManager<IdentityRole> _roleManager = roleManager;
     private readonly IConfiguration _configuration = configuration;
 
@@ -51,6 +54,14 @@ public class AccountController(
         return Unauthorized();
     }
 
+    [HttpGet]
+    [Route("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return Ok();
+    }
+
     [HttpPost]
     [Route("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto model)
@@ -63,7 +74,11 @@ public class AccountController(
         {
             Email = model.Email,
             SecurityStamp = Guid.NewGuid().ToString(),
-            UserName = model.Username
+            UserName = model.Username,
+            EmailConfirmed = false,
+            PhoneNumber = model.PhoneNumber,
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled = false,
         };
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
@@ -73,6 +88,14 @@ public class AccountController(
                     Status = "Error",
                     Message = "User creation failed! Please check user details and try again." 
                 });
+
+        if (!await _roleManager.RoleExistsAsync(UserRoles.User))
+            await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+
+        if (await _roleManager.RoleExistsAsync(UserRoles.User))
+        {
+            await _userManager.AddToRoleAsync(user, UserRoles.User);
+        }
 
         return Ok(new ResponseDto 
         {
@@ -118,7 +141,7 @@ public class AccountController(
         {
             await _userManager.AddToRoleAsync(user, UserRoles.Admin);
         }
-        if (await _roleManager.RoleExistsAsync(UserRoles.Admin))
+        if (await _roleManager.RoleExistsAsync(UserRoles.User))
         {
             await _userManager.AddToRoleAsync(user, UserRoles.User);
         }
@@ -128,6 +151,8 @@ public class AccountController(
             Message = "User created successfully!"
         });
     }
+
+
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)
     {
