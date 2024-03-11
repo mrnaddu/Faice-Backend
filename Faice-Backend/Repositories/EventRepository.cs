@@ -1,6 +1,5 @@
-﻿namespace Faice_Backend.Repositories
+﻿namespace Faice_Backend.Repositories;
+
+public class EventRepository
 {
-    public class EventRepository
-    {
-    }
 }

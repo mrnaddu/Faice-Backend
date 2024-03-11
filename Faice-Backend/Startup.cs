@@ -1,4 +1,6 @@
 ﻿using Faice_Backend.Data;
+using Faice_Backend.Interfaces;
+using Faice_Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -8,28 +10,25 @@ using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Faice_Backend;
-
-public class FaiceHttpiHost(IConfiguration configuration)
+public class Startup(IConfiguration configuration)
 {
     public IConfiguration Configuration { get; } = configuration;
+
     public void ConfigureServices(IServiceCollection services)
     {
-        IConfiguration config = Configuration;
-
         services.AddDbContext<FaiceDbContext>(options =>
-        options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
         services.AddIdentity<IdentityUser, IdentityRole>()
-        .AddEntityFrameworkStores<FaiceDbContext>()
-        .AddDefaultTokenProviders();
+            .AddEntityFrameworkStores<FaiceDbContext>()
+            .AddDefaultTokenProviders();
 
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
             {
                 builder
-                    .WithOrigins(
-                        config["App:CorsOrigins"])
+                    .WithOrigins(Configuration["App:CorsOrigins"])
                     .SetIsOriginAllowedToAllowWildcardSubdomains()
                     .AllowAnyHeader()
                     .AllowAnyMethod()
@@ -43,29 +42,29 @@ public class FaiceHttpiHost(IConfiguration configuration)
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         })
-            .AddJwtBearer(options =>
-            {
-                options.IncludeErrorDetails = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ClockSkew = TimeSpan.Zero,
-                    ValidateIssuerSigningKey = true,
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT:Secret"])),
-                    ValidAudience = config["JWT:ValidAudience"],
-                    ValidIssuer = config["JWT:ValidIssuer"],
-                };
-            });
-
-        services.AddSwaggerGen(option =>
+        .AddJwtBearer(options =>
         {
-            option.SwaggerDoc("v1", new OpenApiInfo 
+            options.IncludeErrorDetails = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ClockSkew = TimeSpan.Zero,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"])),
+                ValidAudience = Configuration["JWT:ValidAudience"],
+                ValidIssuer = Configuration["JWT:ValidIssuer"],
+            };
+        });
+
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "Faice-Backend API",
                 Version = "v1"
             });
 
-            option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,
                 Description = "Please enter a valid token",
@@ -75,26 +74,28 @@ public class FaiceHttpiHost(IConfiguration configuration)
                 Scheme = "Bearer"
             });
 
-            option.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
-                Reference = new OpenApiReference
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
                 }
-            },
-            Array.Empty<string>()
-        }
-    });
+            });
         });
 
         services.AddControllers().AddJsonOptions(opt =>
         {
             opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+
+        services.AddScoped<IEmailAppService, EmailAppService>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

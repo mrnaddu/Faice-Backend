@@ -11,6 +11,6 @@ public class Program
         Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.UseStartup<FaiceHttpiHost>();
+                webBuilder.UseStartup<Startup>();
             });
 }
