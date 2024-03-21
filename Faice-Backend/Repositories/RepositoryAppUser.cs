@@ -5,7 +5,7 @@ using System;
 
 namespace Faice_Backend.Repositories;
 
-public class RepositoryAppUser(
+/*public class RepositoryAppUser(
     ILogger<AppUser> logger,
     FaiceDbContext dbContext) : IRepository<AppUser>
 {
@@ -107,4 +107,4 @@ public class RepositoryAppUser(
             throw;
         }
     }
-}
+}*/
