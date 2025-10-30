@@ -18,15 +18,31 @@ public class Startup(IConfiguration configuration)
 
     public void ConfigureServices(IServiceCollection services)
     {
+        ConfigureDatabase(services);
+        ConfigureIdentity(services);
+        ConfigureCors(services);
+        ConfigureAuthentication(services);
+        ConfigureSwagger(services);
+        ConfigureControllers(services);
+        ConfigureApplicationServices(services);
+    }
+
+    private void ConfigureDatabase(IServiceCollection services)
+    {
+        services.AddDbContext<FaiceDbContext>(options =>
+            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+        services.AddScoped<FaiceDbContext>();
+    }
+
+    private static void ConfigureIdentity(IServiceCollection services)
+    {
         services.AddIdentity<AppUser, IdentityRole>()
             .AddEntityFrameworkStores<FaiceDbContext>()
             .AddDefaultTokenProviders();
+    }
 
-        services.AddDbContext<FaiceDbContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-
-        services.AddScoped<FaiceDbContext>();
-
+    private void ConfigureCors(IServiceCollection services)
+    {
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
@@ -39,7 +55,10 @@ public class Startup(IConfiguration configuration)
                     .AllowCredentials();
             });
         });
+    }
 
+    private void ConfigureAuthentication(IServiceCollection services)
+    {
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -59,7 +78,10 @@ public class Startup(IConfiguration configuration)
                 ValidIssuer = Configuration["JWT:ValidIssuer"],
             };
         });
+    }
 
+    private static void ConfigureSwagger(IServiceCollection services)
+    {
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo
@@ -93,16 +115,22 @@ public class Startup(IConfiguration configuration)
                 }
             });
         });
+    }
 
+    private static void ConfigureControllers(IServiceCollection services)
+    {
         services.AddControllers().AddJsonOptions(opt =>
         {
             opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+    }
 
+    private static void ConfigureApplicationServices(IServiceCollection services)
+    {
         services.AddScoped<IEmailAppService, EmailAppService>();
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public async void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
         {
@@ -113,7 +141,7 @@ public class Startup(IConfiguration configuration)
             });
         }
 
-        SeedData.Initialize(app.ApplicationServices).Wait();
+        await SeedData.Initialize(app.ApplicationServices);
 
         app.UseHttpsRedirection();
 
