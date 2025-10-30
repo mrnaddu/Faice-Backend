@@ -6,8 +6,7 @@ namespace Faice_Backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class EmailController(
-    IEmailAppService emailAppService) : ControllerBase
+public class EmailController(IEmailAppService emailAppService) : ControllerBase
 {
     private readonly IEmailAppService _emailAppService = emailAppService;
 
@@ -15,6 +14,6 @@ public class EmailController(
     [Route("send-test-email")]
     public Task SendTestEmailAsync(SendTestEmailDto input)
     {
-        return _emailAppService.SendEmailAsync(input.Email,input.Subject,input.Body);
+        return _emailAppService.SendEmailAsync(input.Email, input.Subject, input.Body);
     }
 }

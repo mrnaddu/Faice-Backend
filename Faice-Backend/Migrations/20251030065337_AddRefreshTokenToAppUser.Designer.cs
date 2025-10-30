@@ -70,7 +70,7 @@ namespace Faice_Backend.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("RefreshToken")
+                    b.Property<string>("RefreshTokenAsync")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("RefreshTokenExpiryTime")

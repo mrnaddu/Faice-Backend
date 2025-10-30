@@ -26,7 +26,7 @@ public class AccountController(
 
     [HttpPost]
     [Route("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto input)
+    public async Task<IActionResult> LoginAsync([FromBody] LoginDto input)
     {
         var user = await _userManager.FindByEmailAsync(input.Email);
         if (user != null && await _userManager.CheckPasswordAsync(user, input.Password))
@@ -59,7 +59,7 @@ public class AccountController(
     [HttpPost]
     [Route("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> LogoutAsync()
     {
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
         if (!string.IsNullOrEmpty(email))
@@ -74,12 +74,12 @@ public class AccountController(
         }
 
         await HttpContext.SignOutAsync();
-        return Ok(new { message = "Logout successful" });
+        return Ok(new { message = "LogoutAsync successful" });
     }
 
     [HttpPost]
     [Route("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto model)
+    public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
     {
         var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists != null)
@@ -117,7 +117,7 @@ public class AccountController(
 
     [HttpPost]
     [Route("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+    public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordDto model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
@@ -146,7 +146,7 @@ public class AccountController(
 
     [HttpPost]
     [Route("send-reset-email")]
-    public async Task<IActionResult> SendResetEmail([FromBody] ForgotPasswordDto model)
+    public async Task<IActionResult> SendResetEmailAsync([FromBody] ForgotPasswordDto model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
@@ -164,7 +164,7 @@ public class AccountController(
 
     [HttpPost]
     [Route("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto tokenDto)
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenDto tokenDto)
     {
         var principal = GetPrincipalFromExpiredToken(tokenDto.AccessToken);
         if (principal?.Identity?.Name == null)
@@ -284,7 +284,7 @@ public class AccountController(
         return Convert.ToBase64String(randomNumber);
     }
 
-    private ClaimsPrincipal GetPrincipalFromExpiredToken(string? token)
+    private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
     {
         var tokenValidationParameters = new TokenValidationParameters
         {

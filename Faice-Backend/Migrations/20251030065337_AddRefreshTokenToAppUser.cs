@@ -12,7 +12,7 @@ namespace Faice_Backend.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "RefreshToken",
+                name: "RefreshTokenAsync",
                 table: "AspNetUsers",
                 type: "text",
                 nullable: true);
@@ -29,7 +29,7 @@ namespace Faice_Backend.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "RefreshToken",
+                name: "RefreshTokenAsync",
                 table: "AspNetUsers");
 
             migrationBuilder.DropColumn(
